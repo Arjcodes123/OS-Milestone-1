@@ -1,0 +1,10 @@
+stateDiagram-v2
+    [*] --> PENDING: AUTH_HELLO, valid PSK commitment (discovery.c:504-506)
+    PENDING --> ACTIVE: CAP_ACK valid (nonce + RAM-probe checksum + HMAC identity all match, discovery.c:580-581)
+    PENDING --> SUSPECTED: age > 400 ticks, no valid CAP_ACK yet (discovery.c:795-798)
+    ACTIVE --> SUSPECTED: age > 400 ticks since last heartbeat (discovery.c:795-798)
+    SUSPECTED --> ACTIVE: heartbeat received (discovery.c:660-662)
+    PENDING --> EXPIRED: age > 800 ticks (discovery.c:784-786)
+    SUSPECTED --> EXPIRED: age > 800 ticks (discovery.c:784-786)
+    EXPIRED --> PENDING: worker re-sends AUTH_HELLO, slot reused (discovery.c:482,494-496)
+    EXPIRED --> EXPIRED: heartbeat received while EXPIRED -- rejected, SYSTEM_ERR (discovery.c:664-666)

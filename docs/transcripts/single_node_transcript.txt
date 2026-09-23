@@ -1,0 +1,65 @@
+
+xv6 kernel is booting
+
+Scheduler: Round Robin (Default)
+hart 2 starting
+hart 1 starting
+llama -n 32 -i "Once upon a time" -t 0
+init: starting sh
+$ [35m No cached data found for llm_weights. Fetching from server...[0m
+[32mPASS    llm_weights fetched and cached in shared memory (ID: 0).
+[0m
+[35m No cached data found for llm_tokenizer. Fetching from server...[0m
+[32mPASS    llm_tokenizer fetched and cached in shared memory (ID: 1).
+[0m
+thread_create: sharing user memory with main process (pid=3)
+thread_create: sharing user memory with main process (pid=3)
+thread_create: sharing user memory with main process (pid=3)
+Once upon a time, there was a little girl named Lily. She loved to play outside in the sunshine. One day, she saw a big
+
+achieved tok/s: 4.525547
+
+==================================================================
+                       FUNCTION PROFILING
+==================================================================
+            Function    Calls Total(ms) Self(ms)  Avg(ms)  Time(%)
+------------------------------------------------------------------
+ fetch_model_weights        1   108040   108040 108040.00   92.79%
+              matmul     1376     6154     6267     4.47    5.38%
+     fetch_tokenizer        1      707      707   707.00    0.60%
+             forward       32     6985      523   218.28    0.44%
+              encode        1      391      391   391.00    0.33%
+            generate        1     7548      138  7548.00    0.11%
+ multihead_attention      192       90      109     0.46    0.09%
+   build_transformer        1       93       93    93.00    0.07%
+             rmsnorm      416       47       89     0.11    0.07%
+     build_tokenizer        1       35       35    35.00    0.03%
+              sample       28       19       23     0.67    0.01%
+              decode       32        4        8     0.12    0.00%
+       build_sampler        1        3        3     3.00    0.00%
+==================================================================
+Total Time: 117955 ms
+
+==================================================================
+                     SYSTEM PERFORMANCE METRICS
+==================================================================
+
+MEMORY USAGE:
+          Initial      1.7 MB (1839104 bytes)
+             Peak     66.5 MB (69730304 bytes)
+            Final     66.5 MB (69730304 bytes)
+
+TIMING:
+     Total (E2EL)   117955 ms
+        Inference     6850 ms
+
+LLM METRICS:
+             TTFT   112350 ms
+
+THROUGHPUT:
+        Generated       31 tokens
+             Rate     4.52 tokens/sec
+==================================================================
+
+$ QEMU: Terminated
+

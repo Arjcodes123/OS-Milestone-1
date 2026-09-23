@@ -1,0 +1,109 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /home/arj/OS-Milestone-1/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/arj/OS-Milestone-1
+collecting ... collected 8 items
+
+server/distinf_regression_test.py::test_ring_generates FAILED            [ 12%]
+server/distinf_regression_test.py::test_matches_single_node FAILED       [ 25%]
+server/distinf_regression_test.py::test_survives_worker_loss[mid_ring] SKIPPED [ 37%]
+server/distinf_regression_test.py::test_survives_worker_loss[tail] SKIPPED [ 50%]
+server/distinf_regression_test.py::test_capability_lie_is_refused SKIPPED [ 62%]
+server/distinf_regression_test.py::test_corrupted_output_is_not_detected[signflip] SKIPPED [ 75%]
+server/distinf_regression_test.py::test_corrupted_output_is_not_detected[zero] SKIPPED [ 87%]
+server/distinf_regression_test.py::test_capability_lie_above_probe_ceiling_is_accepted SKIPPED [100%]
+
+=================================== FAILURES ===================================
+_____________________________ test_ring_generates ______________________________
+
+sim_output = CompletedProcess(args=['/home/arj/OS-Milestone-1/.venv/bin/python3', '/home/arj/OS-Milestone-1/server/distinf_sim.py',...===============================\n[sim] FAIL -- never assigned layers within 900s: ['worker1', 'worker2']\n", stderr='')
+
+    def test_ring_generates(sim_output):
+        """
+        The ring forms and completes a generation.
+    
+        Checks performed:
+          1. The simulation reports PASS, meaning every milestone was observed in order:
+             registration -> layer assignment -> shards resident -> tokens -> done.
+          2. The process exits zero, so a milestone timeout fails the gate rather than
+             being reported as a successful run with missing output.
+        """
+>       assert sim_output.returncode == 0, (
+            f"simulation failed:\n{sim_output.stdout[-3000:]}\n{sim_output.stderr[-1000:]}")
+E       AssertionError: simulation failed:
+E         [sim] staging 3 prebuilt node image(s)...
+E         [sim] starting host mcast switch (weight server on the segment)...
+E         [sim] booting 3 node(s) (timeout 240s each)...
+E         [sim] master: expecting 2 worker(s), model 1 (stories15M), 32 tokens
+E         [sim] OK  worker1 registered (1.3s)
+E         [sim] OK  worker2 registered (1.3s)
+E         [sim] OK  2 worker(s) registered (serialized)
+E         [sim] FAIL -- never assigned layers within 900s: ['worker1', 'worker2']
+E         [sim] ==================== run summary ====================
+E         [sim]  topology      master 10.0.0.2 + 2 worker(s) | model 1 (stories15M) | 32 steps
+E         [sim]  build         3 image(s) in 0s
+E         [sim]  boot          master 20s | worker1 20s | worker2 20s
+E         [sim]  registration  worker1 1.3s | worker2 1.3s   (serialized)
+E         [sim]  logs          /tmp/distinf_sim/{master,worker1..N}.log
+E         [sim]  result        FAIL -- never assigned layers within 900s: ['worker1', 'worker2']
+E         [sim] =====================================================
+E         [sim] FAIL -- never assigned layers within 900s: ['worker1', 'worker2']
+E         
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/arj/OS-Milestone-1/.venv/bin/python3', '/home/arj/OS-Milestone-1/server/distinf_sim.py', '--workers', '2', '--model', '1', '--steps', '32', '--prompt', 'Once upon a time'], returncode=1, stdout="[sim] staging 3 prebuilt node image(s)...\n[sim] starting host mcast switch (weight server on the segment)...\n[sim] booting 3 node(s) (timeout 240s each)...\n[sim] master: expecting 2 worker(s), model 1 (stories15M), 32 tokens\n[sim] OK  worker1 registered (1.3s)\n[sim] OK  worker2 registered (1.3s)\n[sim] OK  2 worker(s) registered (serialized)\n[sim] FAIL -- never assigned layers within 900s: ['worker1', 'worker2']\n[sim] ==================== run summary ====================\n[sim]  topology      master 10.0.0.2 + 2 worker(s) | model 1 (stories15M) | 32 steps\n[sim]  build         3 image(s) in 0s\n[sim]  boot          master 20s | worker1 20s | worker2 20s\n[sim]  registration  worker1 1.3s | worker2 1.3s   (serialized)\n[sim]  logs          /tmp/distinf_sim/{master,worker1..N}.log\n[sim]  result        FAIL -- never assigned layers within 900s: ['worker1', 'worker2']\n[sim] =====================================================\n[sim] FAIL -- never assigned layers within 900s: ['worker1', 'worker2']\n", stderr='').returncode
+
+server/distinf_regression_test.py:95: AssertionError
+___________________________ test_matches_single_node ___________________________
+
+sim_output = CompletedProcess(args=['/home/arj/OS-Milestone-1/.venv/bin/python3', '/home/arj/OS-Milestone-1/server/distinf_sim.py',...===============================\n[sim] FAIL -- never assigned layers within 900s: ['worker1', 'worker2']\n", stderr='')
+
+    def test_matches_single_node(sim_output):
+        """
+        The distributed token stream equals the single-node golden reference.
+    
+        Checks performed:
+          1. The generated text is recoverable from the master's console.
+          2. It matches the reference exactly -- not approximately. A mismatch means the
+             sharded path diverged from the whole-model path: wrong layer range, wrong KV
+             cache indexing, or an activation corrupted in transit.
+        """
+>       generated = generated_text(sim_output.stdout)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+server/distinf_regression_test.py:134: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+out = "[sim] staging 3 prebuilt node image(s)...\n[sim] starting host mcast switch (weight server on the segment)...\n[sim] ...===========================================\n[sim] FAIL -- never assigned layers within 900s: ['worker1', 'worker2']\n"
+
+    def generated_text(out):
+        """The token block the simulation printed between its two banner lines."""
+        start = out.find("==== generated ====")
+        end = out.find("===================")
+>       assert start >= 0 and end > start, f"no generated text in:\n{out[-2000:]}"
+E       AssertionError: no generated text in:
+E         [sim] staging 3 prebuilt node image(s)...
+E         [sim] starting host mcast switch (weight server on the segment)...
+E         [sim] booting 3 node(s) (timeout 240s each)...
+E         [sim] master: expecting 2 worker(s), model 1 (stories15M), 32 tokens
+E         [sim] OK  worker1 registered (1.3s)
+E         [sim] OK  worker2 registered (1.3s)
+E         [sim] OK  2 worker(s) registered (serialized)
+E         [sim] FAIL -- never assigned layers within 900s: ['worker1', 'worker2']
+E         [sim] ==================== run summary ====================
+E         [sim]  topology      master 10.0.0.2 + 2 worker(s) | model 1 (stories15M) | 32 steps
+E         [sim]  build         3 image(s) in 0s
+E         [sim]  boot          master 20s | worker1 20s | worker2 20s
+E         [sim]  registration  worker1 1.3s | worker2 1.3s   (serialized)
+E         [sim]  logs          /tmp/distinf_sim/{master,worker1..N}.log
+E         [sim]  result        FAIL -- never assigned layers within 900s: ['worker1', 'worker2']
+E         [sim] =====================================================
+E         [sim] FAIL -- never assigned layers within 900s: ['worker1', 'worker2']
+E         
+E       assert (-1 >= 0)
+
+server/distinf_regression_test.py:104: AssertionError
+=========================== short test summary info ============================
+FAILED server/distinf_regression_test.py::test_ring_generates - AssertionErro...
+FAILED server/distinf_regression_test.py::test_matches_single_node - Assertio...
+=================== 2 failed, 6 skipped in 523.38s (0:08:43) ===================

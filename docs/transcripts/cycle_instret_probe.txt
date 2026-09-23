@@ -1,0 +1,23 @@
+$ gdb-multiarch -batch -x probe.gdb xv6-riscv/kernel/kernel
+# probe.gdb: target remote localhost:26000 ; info registers instret cycle mcycle minstret time
+# CPU is halted (-S), never sent 'continue' -- zero guest instructions executed.
+
+--- Sample 1 (t=0s, immediately after connecting) ---
+instret        0x17cdb114779   1635762915193
+cycle          0x17cdb1d753f   1635763713343
+mcycle         0x17cdb26e502   1635764331778
+minstret       0x17cdb31c928   1635765045544
+time           0x0             0
+
+--- (5 real seconds elapse; CPU remains halted the entire time) ---
+
+--- Sample 2 (t=5s) ---
+instret        0x17f7c8496f9   1647061538553
+cycle          0x17f7c90cc70   1647062338672
+mcycle         0x17f7c9c63d4   1647063098324
+minstret       0x17f7ca72ce8   1647063805160
+time           0x30d503a       51204154
+
+--- Delta over 5.00s of real time, 0 guest instructions executed ---
+instret: +11298623360  (~2.2597 GHz)
+cycle:   +11298625329  (~2.2597 GHz)

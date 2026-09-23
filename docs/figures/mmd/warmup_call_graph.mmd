@@ -1,0 +1,7 @@
+flowchart TD
+    compute --> foo
+    compute --> bar
+    bar --> foo
+    foo --> helper
+    foo --> fib
+    fib -->|recursive| fib

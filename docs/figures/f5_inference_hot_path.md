@@ -1,0 +1,46 @@
+# F5 — Inference Hot Path Through `user/llama_core.c` (flowchart)
+
+Call graph rooted at `forward()` (`llama_core.c:742`), in the style of
+`syscall_dependency_diagram.md`. Every edge is a real call in the source; matmul and
+attention each have two paths (serial fallback vs. thread-pool dispatch), both shown.
+
+```mermaid
+graph TD
+F["forward(transformer, token, pos)  llama_core.c:742"] --> EMB["llama_embed(w,p,x,token)  :640"] --> MEMCPY["memcpy(x, embedding_row)"]
+F --> LA["llama_layer_at(w,p,l)  :619 (pointer arithmetic only, per layer)"]
+F --> BLK["llama_block(layer,p,s,x,l,pos)  :653 (per layer, 0..n_layers)"]
+
+BLK --> RN1["rmsnorm(xb,x,rms_att,dim)  :662 (attention rmsnorm)"]
+BLK --> MMQ["matmul(q,xb,wq,dim,dim)  :670"]
+BLK --> MMK["matmul(k,xb,wk,dim,kv_dim)  :671"]
+BLK --> MMV["matmul(v,xb,wv,dim,kv_dim)  :672"]
+BLK --> MHA["multihead_attention(s,p,0,l,pos)  :694"]
+BLK --> MMO["matmul(xb2,xb,wo,dim,dim)  :697"]
+BLK --> RN2["rmsnorm(xb,x,rms_ffn,dim)  :705 (ffn rmsnorm)"]
+BLK --> MM1["matmul(hb,xb,w1,dim,hidden_dim)  :709"]
+BLK --> MM3["matmul(hb2,xb,w3,dim,hidden_dim)  :710"]
+BLK --> MM2["matmul(xb,hb,w2,hidden_dim,dim)  :723"]
+
+MMQ --> MMFORK{"d < 128 or pool uninitialised?  :286"}
+MMFORK -- yes: serial --> MMSER["inline dot-product loop  :287-294"]
+MMFORK -- no: parallel --> MMDISP["dispatch TASK_MATMUL to thread pool  :307-329"] --> UWT["universal_worker_thread  :160"] --> DPU1["dot_product_unrolled(w_row,x,n)  :175, :81"]
+
+MHA --> MHAFORK{"pos < 32 or pool uninitialised?  :568"}
+MHAFORK -- yes: serial --> WDA1["worker_do_attention(seq_work)  :576, :110"]
+MHAFORK -- no: parallel --> ATTDISP["dispatch TASK_ATTENTION to thread pool  :587-605"] --> UWT --> WDA2["worker_do_attention(att_work)  :179, :110"]
+
+WDA1 --> DPU2["dot_product_unrolled(q,k,head_size)  :132"]
+WDA1 --> SM1["softmax(att,pos+1)  :139, :533"]
+WDA2 --> DPU2
+WDA2 --> SM1
+
+F --> HEAD["llama_head(w,p,s,x)  :732"]
+HEAD --> RN3["rmsnorm(x,x,rms_final,dim)  :735"]
+HEAD --> MMCLS["matmul(logits,x,wcls,dim,vocab_size)  :738"]
+```
+
+Notes: `UWT` (the thread-pool worker loop, `:160`) is drawn once and reached from
+both dispatch sites — it is the function called from two different places in this
+graph, mirroring the mechanism the warm-up exercise asked to identify in miniature.
+`dot_product_unrolled` (`:81`) is the innermost kernel, reached on every code path
+(serial matmul, pooled matmul, and both attention paths).

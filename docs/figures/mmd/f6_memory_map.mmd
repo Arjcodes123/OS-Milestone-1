@@ -1,0 +1,10 @@
+block-beta
+columns 2
+  PHYS_HDR["Physical RAM"] VIRT_HDR["Process virtual address space (high to low)"]
+  PT["PHYSTOP = KERNBASE + 256 MiB\n= 0x90000000\n(RAM_IN_MB=256, memlayout.h:44)"] TR["TRAMPOLINE = MAXVA-PGSIZE\n= 0x3ffffff000\n(shared kernel/user trap entry page)"]
+  KHEAP["kernel page-allocation\narea (kalloc pool)"] TF["TRAPFRAME = TRAMPOLINE-PGSIZE\n= 0x3ffffe000\n(p->trapframe)"]
+  KTEXT["kernel text + data\n(from 'end' symbol\ndown to here)"] STK["user stack(s): main thread +\nworker-pool thread stacks.\nthread_create shares user memory\nwith the main process, so pool-thread\nstacks are carved from the same\ngrowable region, not separate\naddress spaces"]
+  KB["KERNBASE = 0x80000000\nentry.S, kernel image\nloaded here"] HEAP["heap, grows up via sbrk (growproc).\nModel weights (TransformerWeights,\nmmap'd from shared-memory cache) +\nRunState activations (malloc_run_state,\nllama_core.c:339) live here. Bounded by\nRLIMIT_AS (rlimit.h:30) -- growproc fails\nonce mapped size would exceed the soft\nlimit, independent of physical RAM"]
+  space BSS["bss + original data"]
+  space TEXT["text (program code)"]
+  space ZERO["address 0"]

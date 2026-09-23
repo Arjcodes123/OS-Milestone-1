@@ -1,0 +1,13 @@
+sequenceDiagram
+    participant M as Master (master_run_token, :1067)
+    participant W1 as Worker 1 (head, layers [0,3))
+    participant W2 as Worker 2 (tail, layers [3,6))
+
+    M->>M: llama_embed(x, token)  :1072
+    M->>W1: PROC_INFER_REQ  infer_send_hop(head, h, x)  :1102<br/>infer_hop_t{session_id,seq,pos,hop=0,n_floats=dim,flags=0}
+    W1->>W1: shard_forward(shard, compute, pos)  :519
+    W1->>W2: PROC_INFER_REQ  infer_send_hop(next, out, compute)  :569<br/>hop=1, compute_us += fwd_us
+    W2->>W2: shard_forward(shard, compute, pos)  :519
+    W2->>M: PROC_INFER_REQ  infer_send_hop(master, out, compute)  :569<br/>hop=2, flags|=INFER_FLAG_FINAL (next == master)  :562-563
+    M->>M: master_pump(200) receives it, sets g_have_final  :1109-1111
+    M->>M: g_metric_rtt_us/compute_us/tokens updated, return 0  :1114-1117
