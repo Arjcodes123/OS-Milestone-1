@@ -16,8 +16,8 @@ date: \today
 |---|---|
 | Abdul Rehman Javaid | 30532 |
 | Hamza Uzair | 30544 |
-| Javeria Khan | 30565 |
-| Qurat Ul Ain | 30493 |
+| Javeria Khan | 31662 |
+| Qurat Ul Ain | 30565 |
 
 **Division of work:** all four team members performed the environment setup
 (cloning the repository, installing the toolchain, and confirming the three
